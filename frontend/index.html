@@ -92,49 +92,110 @@
           <button id="calc-btn" class="btn-primary">Calculate Sigma</button>
         </div>
 
-        <!-- Result Panel -->
+        <!-- Result Panel — compact summary -->
         <div class="card result-card" id="result-card">
           <div id="result-placeholder" class="placeholder-text">
             Enter analyte parameters and click <strong>Calculate Sigma</strong>.
           </div>
           <div id="result-content" class="hidden">
-            <div class="sigma-display">
-              <div class="sigma-value" id="res-sigma">—</div>
-              <div class="sigma-label">Sigma (σ)</div>
+            <!-- Sigma + QGI + Grade trio -->
+            <div class="trio-display">
+              <div class="trio-block">
+                <div class="trio-val" id="res-sigma">—</div>
+                <div class="trio-lbl">Sigma (σ)</div>
+              </div>
+              <div class="trio-divider"></div>
+              <div class="trio-block">
+                <div class="trio-val" id="res-qgi-value" style="font-size:2rem">—</div>
+                <div class="trio-lbl">QGI</div>
+              </div>
+              <div class="trio-divider"></div>
+              <div class="trio-block">
+                <div class="trio-val" id="res-grade" style="font-size:1.3rem">—</div>
+                <div class="trio-lbl">Grade</div>
+              </div>
             </div>
-            <div class="grade-badge-large" id="res-grade">—</div>
 
-            <table class="result-table">
+            <table class="result-table" style="margin-top:.75rem">
               <tbody>
                 <tr><th>Analyte</th><td id="res-analyte"></td></tr>
                 <tr><th>Department</th><td id="res-dept"></td></tr>
                 <tr><th>TEa (%)</th><td id="res-tea"></td></tr>
                 <tr><th>Bias (%)</th><td id="res-bias"></td></tr>
                 <tr><th>CV (%)</th><td id="res-cv"></td></tr>
-                <tr><th>TEa Source</th><td id="res-source"></td></tr>
+                <tr><th>Source</th><td id="res-source"></td></tr>
               </tbody>
             </table>
 
-            <!-- QGI Panel -->
-            <div class="section-heading">Quality Goal Index (QGI)</div>
-            <div class="qgi-panel" id="res-qgi-panel">
-              <div class="qgi-left">
-                <span class="qgi-value" id="res-qgi-value">—</span>
-                <span class="qgi-formula">(Bias / 1.65) / (CV / TEa × 0.5)</span>
-              </div>
-              <div class="qgi-badge" id="res-qgi-badge">—</div>
-            </div>
-            <p class="interp-text" id="res-qgi-action"></p>
-
-            <div class="section-heading">Recommended QC Rules</div>
+            <div class="section-heading" style="margin-top:.85rem">QC Rules</div>
             <div id="res-rules" class="qc-rules"></div>
 
-            <div class="section-heading">Interpretation</div>
-            <p id="res-interp" class="interp-text"></p>
-
-            <button id="opspecs-from-calc" class="btn-secondary">View OPSpecs Chart →</button>
+            <button id="opspecs-from-calc" class="btn-secondary" style="margin-top:.85rem;width:100%">View OPSpecs Chart →</button>
           </div>
         </div>
+      </div>
+
+      <!-- ── Detailed QGI Results (full-width, shown after calculate) ── -->
+      <div id="detail-results" class="hidden" style="margin-top:1.25rem">
+
+        <!-- QGI Gauge -->
+        <div class="card" style="margin-bottom:1rem">
+          <div class="section-heading" style="margin-bottom:.75rem">QGI Position — (Bias / 1.65) / (CV / TEa × 0.5)</div>
+          <div class="qgi-track-wrap">
+            <!-- Zone background bands -->
+            <div class="qgi-zone-band" style="width:40%;background:rgba(99,102,241,.15);border-radius:6px 0 0 6px;"></div>
+            <div class="qgi-zone-band" style="width:20%;background:rgba(16,185,129,.15);"></div>
+            <div class="qgi-zone-band" style="width:15%;background:rgba(245,158,11,.15);"></div>
+            <div class="qgi-zone-band" style="width:25%;background:rgba(239,68,68,.15);border-radius:0 6px 6px 0;"></div>
+            <!-- Fill + needle -->
+            <div class="qgi-fill" id="qgi-fill"></div>
+            <div class="qgi-needle" id="qgi-needle"></div>
+          </div>
+          <div class="qgi-scale-labels">
+            <span>0</span><span>0.5</span><span style="color:var(--accent-h);font-weight:700">0.8</span>
+            <span style="color:#10b981;font-weight:700">1.0</span>
+            <span style="color:var(--accent-h);font-weight:700">1.2</span>
+            <span>1.5</span><span>2.0+</span>
+          </div>
+          <div class="qgi-zone-chips">
+            <span class="qgi-zone-chip" style="background:rgba(99,102,241,.15);color:#a5b4fc;border-color:rgba(99,102,241,.3)">&lt; 0.8 — Precision-limited</span>
+            <span class="qgi-zone-chip" style="background:rgba(16,185,129,.15);color:#6ee7b7;border-color:rgba(16,185,129,.3)">0.8–1.2 — Balanced ✓</span>
+            <span class="qgi-zone-chip" style="background:rgba(245,158,11,.15);color:#fcd34d;border-color:rgba(245,158,11,.3)">1.2–1.5 — Accuracy (moderate)</span>
+            <span class="qgi-zone-chip" style="background:rgba(239,68,68,.15);color:#fca5a5;border-color:rgba(239,68,68,.3)">&gt; 1.5 — Accuracy (severe)</span>
+            <span class="qgi-zone-chip" id="qgi-current-chip" style="background:rgba(99,102,241,.2);color:var(--accent-h);border-color:rgba(99,102,241,.5);font-weight:700"></span>
+          </div>
+        </div>
+
+        <!-- QGI Interpretation -->
+        <div class="card qgi-interp-card" id="qgi-interp-card" style="margin-bottom:1rem">
+          <div class="section-heading" id="qgi-interp-title" style="margin-bottom:.6rem">Interpretation</div>
+          <p class="interp-text" id="res-qgi-action"></p>
+        </div>
+
+        <!-- Error Breakdown table -->
+        <div class="card" style="margin-bottom:1rem">
+          <div class="section-heading" style="margin-bottom:.75rem">Error Breakdown</div>
+          <div class="table-wrap">
+            <table class="data-table" id="breakdown-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Value</th>
+                  <th>% of TEa</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="breakdown-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- QC Strategy -->
+        <div class="card qc-strategy-card" id="qc-strategy-card">
+          <div class="section-heading" style="color:#93c5fd;margin-bottom:.6rem">▸ QC Strategy Recommendation</div>
+          <div id="qc-strategy-text" class="interp-text"></div>
+        </div>
+
       </div>
 
       <!-- History Table -->

@@ -136,16 +136,20 @@ function displayResult(d) {
   resultPlaceholder.classList.add('hidden');
   resultContent.classList.remove('hidden');
 
+  // ── Trio: Sigma / QGI / Grade ──────────────────────────────────────────
   const sigmaEl = document.getElementById('res-sigma');
   sigmaEl.textContent = d.sigma;
   sigmaEl.style.color = d.grade_color;
 
+  const qgiValEl = document.getElementById('res-qgi-value');
+  qgiValEl.textContent = d.qgi;
+  qgiValEl.style.color = d.qgi_color;
+
   const gradeEl = document.getElementById('res-grade');
   gradeEl.textContent = d.grade;
-  gradeEl.style.background = d.grade_color + '22';
   gradeEl.style.color = d.grade_color;
-  gradeEl.style.border = `1px solid ${d.grade_color}55`;
 
+  // ── Summary table ─────────────────────────────────────────────────────
   document.getElementById('res-analyte').textContent = d.analyte;
   document.getElementById('res-dept').textContent    = d.department;
   document.getElementById('res-tea').textContent     = d.tea + '%';
@@ -153,21 +157,129 @@ function displayResult(d) {
   document.getElementById('res-cv').textContent      = d.cv_pct + '%';
   document.getElementById('res-source').textContent  = d.tea_source || '—';
 
-  // QGI
-  const qgiVal   = document.getElementById('res-qgi-value');
-  const qgiBadge = document.getElementById('res-qgi-badge');
-  qgiVal.textContent    = d.qgi;
-  qgiVal.style.color    = d.qgi_color;
-  qgiBadge.textContent  = d.qgi_label;
-  qgiBadge.style.background = d.qgi_color + '22';
-  qgiBadge.style.color       = d.qgi_color;
-  qgiBadge.style.border      = `1px solid ${d.qgi_color}55`;
-  document.getElementById('res-qgi-action').textContent = d.qgi_action;
+  // ── QC Rules ──────────────────────────────────────────────────────────
+  document.getElementById('res-rules').innerHTML =
+    d.qc_rules.map(r => `<span class="qc-rule-pill">${r.rule}</span>`).join('');
 
-  const rulesEl = document.getElementById('res-rules');
-  rulesEl.innerHTML = d.qc_rules.map(r => `<span class="qc-rule-pill">${r.rule}</span>`).join('');
+  // ── Show detailed section ─────────────────────────────────────────────
+  document.getElementById('detail-results').classList.remove('hidden');
 
-  document.getElementById('res-interp').textContent = d.interpretation;
+  // ── QGI Gauge ─────────────────────────────────────────────────────────
+  const MAX_QGI = Math.max(d.qgi * 1.25, 2.0);  // dynamic scale — always shows needle with headroom
+  const pct = Math.min(d.qgi / MAX_QGI, 1) * 100;
+  document.getElementById('qgi-fill').style.width      = pct + '%';
+  document.getElementById('qgi-fill').style.background = d.qgi_color;
+  document.getElementById('qgi-needle').style.left     = pct + '%';
+  document.getElementById('qgi-current-chip').textContent = `▶ QGI = ${d.qgi}`;
+  document.getElementById('qgi-current-chip').style.color       = d.qgi_color;
+  document.getElementById('qgi-current-chip').style.borderColor = d.qgi_color + '88';
+  document.getElementById('qgi-current-chip').style.background  = d.qgi_color + '22';
+
+  // ── QGI Interpretation card ───────────────────────────────────────────
+  const interpCard = document.getElementById('qgi-interp-card');
+  interpCard.className = 'card qgi-interp-card ' + _qgiZoneClass(d.qgi_label);
+  document.getElementById('qgi-interp-title').textContent = `▸ ${d.analyte} — ${d.qgi_label}`;
+  document.getElementById('qgi-interp-title').style.color = d.qgi_color;
+  document.getElementById('res-qgi-action').textContent   = d.qgi_action;
+
+  // ── Error Breakdown table ─────────────────────────────────────────────
+  const tea  = d.tea;
+  const bias = Math.abs(d.bias_pct);
+  const cv   = d.cv_pct;
+  const re   = parseFloat((1.65 * cv).toFixed(3));
+  const te   = parseFloat((bias + re).toFixed(3));
+  const biasPctTea = ((bias / tea) * 100).toFixed(1);
+  const rePctTea   = ((re   / tea) * 100).toFixed(1);
+  const tePctTea   = ((te   / tea) * 100).toFixed(1);
+
+  const statusIcon = (v, good, warn) =>
+    v <= good ? `<span style="color:#10b981">✓ Acceptable</span>` :
+    v <= warn ? `<span style="color:#f59e0b">⚠ Borderline</span>` :
+                `<span style="color:#ef4444">✗ Exceeds limit</span>`;
+
+  document.getElementById('breakdown-tbody').innerHTML = `
+    <tr>
+      <td>TEa (allowable)</td>
+      <td style="color:var(--accent-h);font-weight:700">${tea}%</td>
+      <td style="font-weight:700">100.0%</td>
+      <td style="color:#93c5fd">Reference</td>
+    </tr>
+    <tr>
+      <td>|Bias%|</td>
+      <td style="color:${bias/tea<.33?'#10b981':bias/tea<.5?'#f59e0b':'#ef4444'};font-weight:700">${bias}%</td>
+      <td>${biasPctTea}%</td>
+      <td>${statusIcon(+biasPctTea, 33, 50)}</td>
+    </tr>
+    <tr>
+      <td>1.65 × CV (Random Error)</td>
+      <td style="color:${+rePctTea<50?'#10b981':+rePctTea<75?'#f59e0b':'#ef4444'};font-weight:700">${re}%</td>
+      <td>${rePctTea}%</td>
+      <td>${statusIcon(+rePctTea, 50, 75)}</td>
+    </tr>
+    <tr style="background:var(--surface2)">
+      <td style="font-weight:600">Total Error (Bias + 1.65×CV)</td>
+      <td style="color:${+tePctTea<=100?'#10b981':'#ef4444'};font-weight:700">${te}%</td>
+      <td style="font-weight:700">${tePctTea}%</td>
+      <td>${+tePctTea<=100?'<span style="color:#10b981">✓ Within TEa</span>':'<span style="color:#ef4444">✗ Exceeds TEa</span>'}</td>
+    </tr>
+    <tr>
+      <td>Sigma (σ)</td>
+      <td style="color:${d.grade_color};font-weight:700">${d.sigma}</td>
+      <td>—</td>
+      <td style="color:${d.grade_color};font-weight:600">${d.grade}</td>
+    </tr>
+    <tr>
+      <td>QGI</td>
+      <td style="color:${d.qgi_color};font-weight:700">${d.qgi}</td>
+      <td>—</td>
+      <td style="color:${d.qgi_color};font-weight:600">${d.qgi_label}</td>
+    </tr>
+  `;
+
+  // ── QC Strategy ───────────────────────────────────────────────────────
+  document.getElementById('qc-strategy-text').innerHTML = _qcStrategy(d.sigma, d.qgi_label, d.qc_rules);
+}
+
+function _qgiZoneClass(label) {
+  if (label === 'Precision-limited') return 'zone-precision';
+  if (label === 'Mixed')             return 'zone-balanced';
+  if (label === 'Accuracy-limited')  {
+    return 'zone-moderate'; // backend only has 3 zones; severe shown via color
+  }
+  return '';
+}
+
+function _qcStrategy(sigma, qgiLabel, rules) {
+  let freq, n, note;
+  if (sigma >= 6) {
+    freq = '1 run / shift (or less)'; n = 'N = 2';
+    note = 'World-class performance. Minimal QC burden. Consider risk-based QC reduction per CLSI EP23.';
+  } else if (sigma >= 5) {
+    freq = '1–2 runs / day'; n = 'N = 2';
+    note = 'Excellent performance. Standard QC sufficient. Expand SQC boundaries if desired.';
+  } else if (sigma >= 4) {
+    freq = '2 runs / day'; n = 'N = 2–3';
+    note = 'Good performance. Westgard multirule balances false rejection and error detection.';
+  } else if (sigma >= 3) {
+    freq = '3–4 runs / day (before each analytical run)'; n = 'N = 3';
+    note = 'Marginal performance. Increased QC frequency and tighter rules required. ' +
+           (qgiLabel === 'Precision-limited'
+             ? 'QGI indicates CV is the priority — investigate reagent lot, pipetting, instrument maintenance.'
+             : 'QGI indicates Bias is the priority — recalibrate, verify calibrator traceability, check EQA z-scores.');
+  } else {
+    freq = 'Continuous — suspend patient results until resolved'; n = 'N ≥ 4';
+    note = 'CRITICAL: Performance does not meet quality goals. Results must not be reported. Immediate investigation required.';
+  }
+
+  const rulePills = rules.map(r => `<span class="qc-strategy-chip">${r.rule}</span>`).join('');
+  return `
+    <div class="qc-strategy-row">${rulePills}</div>
+    <div class="qc-strategy-row">
+      <span class="qc-strategy-chip">🕐 ${freq}</span>
+      <span class="qc-strategy-chip">🔬 ${n} per level</span>
+    </div>
+    <div class="qc-strategy-note">${note}</div>
+  `;
 }
 
 // Jump to OPSpecs from result
