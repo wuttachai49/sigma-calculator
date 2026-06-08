@@ -1,7 +1,9 @@
 """
 Built-in TEa (Total Allowable Error) database.
-Primary source: Westgard Quality Goals (compiled from CLIA, BV, NCEP, NGSP, KDIGO, and other standards).
-Analytes organized by department: Hematology, Clinical Chemistry, Clinical Immunology.
+Primary sources:
+  - Hematology: CLIA 2024 (updated PT criteria for CBC/coagulation)
+  - Clinical Chemistry: Westgard consolidated specs (CLIA, NCEP, BV, NGSP, KDIGO)
+  - Clinical Immunology: Westgard consolidated specs (BV, CLIA, and specialty standards)
 Values are in % unless noted.
 """
 

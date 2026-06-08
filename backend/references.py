@@ -1,19 +1,6 @@
 """TEa source reference index."""
 
 REFERENCES: dict[str, dict] = {
-    "CLIA": {
-        "full_name": "Clinical Laboratory Improvement Amendments (CLIA '88)",
-        "organization": "Centers for Medicare & Medicaid Services (CMS), USA",
-        "description": (
-            "US federal regulatory standards for clinical laboratory testing. "
-            "CLIA '88 defines proficiency testing (PT) criteria for acceptable performance, "
-            "used as TEa limits for a wide range of analytes."
-        ),
-        "url": "https://www.cms.gov/regulations-and-guidance/legislation/clia",
-        "document": "42 CFR Part 493 — Laboratory Requirements",
-        "year": "1988 (updated periodically)",
-        "category": "Regulatory",
-    },
     "BV": {
         "full_name": "Biological Variation (Desirable Analytical Quality Specifications)",
         "organization": "European Federation of Clinical Chemistry and Laboratory Medicine (EFLM)",
