@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sigma Metric Calculator — Clinical Laboratory</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">σ</span>
+        <div>
+          <h1>Sigma Metric Calculator</h1>
+          <p>Clinical Laboratory Quality Management</p>
+        </div>
+      </div>
+      <nav class="dept-badges">
+        <span class="badge hematology">Hematology</span>
+        <span class="badge chemistry">Clinical Chemistry</span>
+        <span class="badge immunology">Clinical Immunology</span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab active" data-tab="calculator">Calculator</button>
+      <button class="tab" data-tab="batch">Batch Import</button>
+      <button class="tab" data-tab="opspecs">OPSpecs Chart</button>
+      <button class="tab" data-tab="guide">Sigma Guide</button>
+      <button class="tab" data-tab="references">TEa References</button>
+    </div>
+
+    <!-- ── Calculator Tab ──────────────────────────────────────────────── -->
+    <section id="tab-calculator" class="tab-content active">
+      <div class="card-grid">
+        <div class="card">
+          <h2>Analyte Input</h2>
+
+          <div class="form-row">
+            <label>Department</label>
+            <select id="dept-select">
+              <option value="">-- Select Department --</option>
+              <option value="Clinical Chemistry">Clinical Chemistry</option>
+              <option value="Hematology">Hematology</option>
+              <option value="Clinical Immunology">Clinical Immunology</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label>Analyte</label>
+            <div class="analyte-input-wrap">
+              <input id="analyte-input" type="text" placeholder="Type or select analyte…" autocomplete="off" />
+              <div id="analyte-dropdown" class="dropdown hidden"></div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label>
+              TEa (%)
+              <span class="hint" title="Total Allowable Error from CLIA/Biological Variation">?</span>
+            </label>
+            <input id="tea-input" type="number" step="0.1" min="0.1" placeholder="e.g. 10.0" />
+            <span id="tea-source-badge" class="source-badge hidden"></span>
+          </div>
+
+          <div class="form-row">
+            <label>
+              Bias (%)
+              <span class="hint" title="|(method mean − reference mean) / reference mean| × 100">?</span>
+            </label>
+            <input id="bias-input" type="number" step="0.01" placeholder="e.g. 2.5" />
+          </div>
+
+          <div class="form-row">
+            <label>
+              CV (%)
+              <span class="hint" title="Coefficient of Variation from internal QC data">?</span>
+            </label>
+            <input id="cv-input" type="number" step="0.01" min="0.01" placeholder="e.g. 3.0" />
+          </div>
+
+          <div class="form-row">
+            <label>TEa Source</label>
+            <input id="tea-source-input" type="text" placeholder="e.g. CLIA, BV, RCPA…" />
+          </div>
+
+          <button id="calc-btn" class="btn-primary">Calculate Sigma</button>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="card result-card" id="result-card">
+          <div id="result-placeholder" class="placeholder-text">
+            Enter analyte parameters and click <strong>Calculate Sigma</strong>.
+          </div>
+          <div id="result-content" class="hidden">
+            <div class="sigma-display">
+              <div class="sigma-value" id="res-sigma">—</div>
+              <div class="sigma-label">Sigma (σ)</div>
+            </div>
+            <div class="grade-badge-large" id="res-grade">—</div>
+
+            <table class="result-table">
+              <tbody>
+                <tr><th>Analyte</th><td id="res-analyte"></td></tr>
+                <tr><th>Department</th><td id="res-dept"></td></tr>
+                <tr><th>TEa (%)</th><td id="res-tea"></td></tr>
+                <tr><th>Bias (%)</th><td id="res-bias"></td></tr>
+                <tr><th>CV (%)</th><td id="res-cv"></td></tr>
+                <tr><th>TEa Source</th><td id="res-source"></td></tr>
+              </tbody>
+            </table>
+
+            <!-- QGI Panel -->
+            <div class="section-heading">Quality Goal Index (QGI)</div>
+            <div class="qgi-panel" id="res-qgi-panel">
+              <div class="qgi-left">
+                <span class="qgi-value" id="res-qgi-value">—</span>
+                <span class="qgi-formula">|Bias| / (1.5 × CV)</span>
+              </div>
+              <div class="qgi-badge" id="res-qgi-badge">—</div>
+            </div>
+            <p class="interp-text" id="res-qgi-action"></p>
+
+            <div class="section-heading">Recommended QC Rules</div>
+            <div id="res-rules" class="qc-rules"></div>
+
+            <div class="section-heading">Interpretation</div>
+            <p id="res-interp" class="interp-text"></p>
+
+            <button id="opspecs-from-calc" class="btn-secondary">View OPSpecs Chart →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Table -->
+      <div class="card mt-2" id="history-card" style="display:none;">
+        <div class="history-header">
+          <h2>Session History</h2>
+          <button id="clear-history" class="btn-ghost">Clear</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="history-table">
+            <thead>
+              <tr>
+                <th>Analyte</th>
+                <th>Dept.</th>
+                <th>TEa%</th>
+                <th>Bias%</th>
+                <th>CV%</th>
+                <th>σ</th>
+                <th>Grade</th>
+                <th>QGI</th>
+                <th>QGI Label</th>
+                <th>QC Rules</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Batch Tab ───────────────────────────────────────────────────── -->
+    <section id="tab-batch" class="tab-content hidden">
+      <div class="card">
+        <h2>Batch Import</h2>
+        <p class="muted">Upload a CSV or Excel file. Standard format requires columns: <code>analyte</code>, <code>department</code>, <code>tea</code>, <code>bias_pct</code>, <code>cv_pct</code>. Also accepts your lab's native IQC Excel format (with <code>IQC_data</code> sheet) — TEa is auto-looked up.</p>
+
+        <div class="upload-area" id="upload-area">
+          <div class="upload-icon">↑</div>
+          <p>Drag & drop or <label for="file-input" class="link-label">browse file</label></p>
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls" class="hidden" />
+          <p class="muted small">CSV, XLSX, XLS supported</p>
+        </div>
+
+        <div id="batch-filename" class="filename-chip hidden"></div>
+
+        <button id="batch-run-btn" class="btn-primary mt-1" disabled>Run Batch Calculation</button>
+
+        <div id="batch-error" class="error-box hidden"></div>
+
+        <div id="batch-results" class="hidden mt-2">
+          <div class="batch-summary" id="batch-summary"></div>
+          <div class="table-wrap mt-1">
+            <table class="data-table" id="batch-table">
+              <thead>
+                <tr>
+                  <th>Analyte</th>
+                  <th>Dept.</th>
+                  <th>TEa%</th>
+                  <th>Bias%</th>
+                  <th>CV%</th>
+                  <th>σ</th>
+                  <th>Grade</th>
+                  <th>QGI</th>
+                  <th>QGI Label</th>
+                  <th>QC Rules</th>
+                </tr>
+              </thead>
+              <tbody id="batch-tbody"></tbody>
+            </table>
+          </div>
+          <button id="export-csv" class="btn-secondary mt-1">Export Results as CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── OPSpecs Tab ─────────────────────────────────────────────────── -->
+    <section id="tab-opspecs" class="tab-content hidden">
+      <div class="card">
+        <h2>OPSpecs — Method Decision Chart</h2>
+        <p class="muted">Plot your method's (CV%, Bias%) on the Operating Specifications chart to see which Sigma region it falls in.</p>
+
+        <div class="opspecs-controls">
+          <div class="form-row inline">
+            <label>TEa (%)</label>
+            <input id="ops-tea" type="number" step="0.5" min="1" value="10" />
+          </div>
+          <div class="form-row inline">
+            <label>Method CV (%)</label>
+            <input id="ops-cv" type="number" step="0.1" min="0.1" placeholder="Your CV%" />
+          </div>
+          <div class="form-row inline">
+            <label>Method Bias (%)</label>
+            <input id="ops-bias" type="number" step="0.1" placeholder="Your Bias%" />
+          </div>
+          <button id="ops-plot-btn" class="btn-primary">Plot Chart</button>
+        </div>
+
+        <div id="opspecs-chart" style="height:520px; margin-top:1.5rem;"></div>
+      </div>
+    </section>
+
+    <!-- ── Guide Tab ──────────────────────────────────────────────────── -->
+    <section id="tab-guide" class="tab-content hidden">
+      <div class="card">
+        <h2>Sigma Metric Guide</h2>
+
+        <h3>Formula</h3>
+        <div class="formula-box">σ = (TEa% − |Bias%|) / CV%</div>
+
+        <h3>Sigma Performance Bands</h3>
+        <table class="data-table">
+          <thead><tr><th>Sigma (σ)</th><th>Grade</th><th>QC Strategy</th></tr></thead>
+          <tbody>
+            <tr><td class="sigma-cell world">≥ 6</td><td><span class="grade-pill" style="background:#10b981">World Class</span></td><td>1:3s, N=2, 1 run/day</td></tr>
+            <tr><td class="sigma-cell excellent">5 – 6</td><td><span class="grade-pill" style="background:#3b82f6">Excellent</span></td><td>1:3s/2:2s/R:4s, N=2</td></tr>
+            <tr><td class="sigma-cell good">4 – 5</td><td><span class="grade-pill" style="background:#f59e0b">Good</span></td><td>1:2.5s/2:2s/R:4s/4:1s/10x, N=4</td></tr>
+            <tr><td class="sigma-cell marginal">3 – 4</td><td><span class="grade-pill" style="background:#f97316">Marginal</span></td><td>1:2s/2:2s/R:4s/4:1s/8x, N=6</td></tr>
+            <tr><td class="sigma-cell unacceptable">< 3</td><td><span class="grade-pill" style="background:#ef4444">Unacceptable</span></td><td>Method improvement required</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Westgard QC Rules Reference</h3>
+        <table class="data-table">
+          <thead><tr><th>Rule</th><th>Trigger</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1:2s</strong></td><td>1 control > ±2 SD</td><td>Warning rule</td></tr>
+            <tr><td><strong>1:2.5s</strong></td><td>1 control > ±2.5 SD</td><td>Warning (tighter)</td></tr>
+            <tr><td><strong>1:3s</strong></td><td>1 control > ±3 SD</td><td>Reject — random error</td></tr>
+            <tr><td><strong>2:2s</strong></td><td>2 consecutive > +2 SD or both < −2 SD</td><td>Reject — systematic error</td></tr>
+            <tr><td><strong>R:4s</strong></td><td>Range between 2 controls > 4 SD</td><td>Reject — random error</td></tr>
+            <tr><td><strong>4:1s</strong></td><td>4 consecutive > ±1 SD (same side)</td><td>Reject — systematic drift</td></tr>
+            <tr><td><strong>8x / 10x</strong></td><td>8 or 10 consecutive on same side of mean</td><td>Reject — sustained bias</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Quality Goal Index (QGI)</h3>
+        <div class="formula-box">QGI = |Bias%| / (1.5 × CV%)</div>
+        <table class="data-table">
+          <thead><tr><th>QGI</th><th>Interpretation</th><th>Priority Action</th></tr></thead>
+          <tbody>
+            <tr><td style="color:#6366f1;font-weight:700">&lt; 0.8</td><td><span class="grade-pill" style="background:#6366f1">Precision-limited</span></td><td>Reduce CV — check reagent lots, pipetting, instrument precision</td></tr>
+            <tr><td style="color:#f59e0b;font-weight:700">0.8 – 1.2</td><td><span class="grade-pill" style="background:#f59e0b">Mixed</span></td><td>Both bias &amp; imprecision contribute — review calibration and precision</td></tr>
+            <tr><td style="color:#ef4444;font-weight:700">&gt; 1.2</td><td><span class="grade-pill" style="background:#ef4444">Accuracy-limited</span></td><td>Reduce Bias — investigate calibration, matrix effects, EQA performance</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Column Template for Batch Import</h3>
+        <div class="code-block">analyte,department,tea,bias_pct,cv_pct,tea_source
+Glucose,Clinical Chemistry,10,1.5,2.0,CLIA
+Hemoglobin,Hematology,7,0.8,1.5,CLIA
+TSH,Clinical Immunology,20,3.0,5.0,BV</div>
+        <button id="download-template" class="btn-secondary">Download CSV Template</button>
+      </div>
+    </section>
+
+    <!-- ── References Tab ────────────────────────────────────────────────── -->
+    <section id="tab-references" class="tab-content hidden">
+      <div class="card">
+        <div class="ref-header">
+          <h2>TEa Source Reference Index</h2>
+          <div class="ref-filter-wrap">
+            <input id="ref-search" type="text" placeholder="Search sources…" class="ref-search" />
+            <select id="ref-cat-filter" class="ref-cat-select">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+        <p class="muted" style="margin-bottom:1.5rem;">
+          All Total Allowable Error (TEa) values in this platform are sourced from the following peer-reviewed
+          guidelines, regulatory standards, and EQA programs.
+        </p>
+        <div id="ref-cards" class="ref-cards"></div>
+      </div>
+
+      <!-- Analyte–Source cross-reference table -->
+      <div class="card mt-2">
+        <h2>Analyte TEa Cross-Reference</h2>
+        <p class="muted" style="margin-bottom:1rem;">TEa values and source for every analyte in the built-in database.</p>
+        <div class="ref-dept-tabs">
+          <button class="ref-dept-btn active" data-dept="">All</button>
+          <button class="ref-dept-btn" data-dept="Clinical Chemistry">Clinical Chemistry</button>
+          <button class="ref-dept-btn" data-dept="Hematology">Hematology</button>
+          <button class="ref-dept-btn" data-dept="Clinical Immunology">Clinical Immunology</button>
+        </div>
+        <div class="table-wrap mt-1">
+          <table class="data-table" id="analyte-ref-table">
+            <thead>
+              <tr>
+                <th>Analyte</th>
+                <th>Department</th>
+                <th>TEa (%)</th>
+                <th>Source</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody id="analyte-ref-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Sigma Metric Calculator · Clinical Laboratory Quality Management · Westgard QC Framework</p>
+  </footer>
+
+  <!-- ── Report Modal ──────────────────────────────────────────────────────── -->
+  <div id="report-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Generate Report</h2>
+        <button id="modal-close" class="btn-ghost">✕</button>
+      </div>
+      <p class="muted" style="margin-bottom:1.25rem;">Add optional metadata to the report header, then choose your format.</p>
+
+      <div class="form-row">
+        <label>Lab / Hospital Name</label>
+        <input id="rpt-lab" type="text" placeholder="e.g. Taksin Hematology Lab" />
+      </div>
+      <div class="form-row">
+        <label>Analyzer</label>
+        <input id="rpt-analyzer" type="text" placeholder="e.g. BC-6200 Unit 1" />
+      </div>
+      <div class="form-row">
+        <label>Department</label>
+        <input id="rpt-dept" type="text" placeholder="e.g. Hematology" />
+      </div>
+      <div class="form-row">
+        <label>Reporting Period</label>
+        <input id="rpt-period" type="text" placeholder="e.g. Oct 2025 – Mar 2026" />
+      </div>
+
+      <div class="modal-actions">
+        <button id="rpt-excel-btn" class="btn-report excel">
+          <span class="rpt-icon">⬇</span> Download Excel (.xlsx)
+        </button>
+        <button id="rpt-pdf-btn" class="btn-report pdf">
+          <span class="rpt-icon">⬇</span> Download PDF
+        </button>
+      </div>
+      <div id="rpt-error" class="error-box hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── Floating report button (appears when results exist) ──────────────── -->
+  <div id="report-fab" class="report-fab hidden" title="Generate Report">
+    <span>Report</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
