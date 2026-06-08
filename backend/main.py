@@ -207,10 +207,10 @@ def calculate(req: CalculateRequest):
 
 
 @app.post("/api/qgi")
-def qgi_only(bias_pct: float, cv_pct: float):
+def qgi_only(bias_pct: float, cv_pct: float, tea: float):
     """Calculate QGI standalone."""
     try:
-        return calculate_qgi(bias_pct, cv_pct)
+        return calculate_qgi(bias_pct, cv_pct, tea)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 

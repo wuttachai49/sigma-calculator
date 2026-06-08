@@ -6,9 +6,16 @@ from dataclasses import dataclass
 
 # ── QGI ───────────────────────────────────────────────────────────────────────
 
-def calculate_qgi(bias_pct: float, cv_pct: float) -> dict:
+def calculate_qgi(bias_pct: float, cv_pct: float, tea: float) -> dict:
     """
-    Quality Goal Index = |Bias%| / (1.5 × CV%)
+    Quality Goal Index = (Bias / 1.65) / (CV / TEa × 0.5)
+
+    Numerator   : Bias% / 1.65          — inaccuracy relative to the 1.65 z-score factor
+    Denominator : (CV% / TEa%) × 0.5   — imprecision relative to allowable imprecision (0.5 × TEa)
+
+    Simplified  : QGI = (Bias% × TEa%) / (1.65 × 0.5 × CV%)
+                       = (Bias% × TEa%) / (0.825 × CV%)
+
     Interpretation:
       < 0.8  → Precision-limited  (focus: reduce CV)
       0.8–1.2 → Mixed             (both bias & CV contribute equally)
@@ -16,7 +23,12 @@ def calculate_qgi(bias_pct: float, cv_pct: float) -> dict:
     """
     if cv_pct <= 0:
         raise ValueError("CV% must be > 0")
-    qgi = abs(bias_pct) / (1.5 * cv_pct)
+    if tea <= 0:
+        raise ValueError("TEa must be > 0")
+    denominator = (cv_pct / tea) * 0.5
+    if denominator == 0:
+        raise ValueError("QGI denominator is zero (CV% / TEa × 0.5 = 0)")
+    qgi = (abs(bias_pct) / 1.65) / denominator
     qgi = round(qgi, 3)
 
     if qgi < 0.8:
@@ -165,7 +177,7 @@ def calculate_sigma(
             f"Runs/day = {qc_data['runs']}"
         )
 
-    qgi_data = calculate_qgi(bias_pct, cv_pct)
+    qgi_data = calculate_qgi(bias_pct, cv_pct, tea)
 
     return SigmaResult(
         analyte=analyte,

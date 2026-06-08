@@ -86,7 +86,7 @@ def generate_pdf(
     # ── Formula note ─────────────────────────────────────────────────────────
     pdf.set_font("Helvetica", "I", 8)
     pdf.set_text_color(120, 120, 120)
-    pdf.cell(0, 5, _s("Formula: Sigma = (TEa - |Bias%|) / CV%   |   QGI = |Bias%| / (1.5 x CV%)"),
+    pdf.cell(0, 5, _s("Formula: Sigma = (TEa - |Bias%|) / CV%   |   QGI = (Bias% / 1.65) / (CV% / TEa% x 0.5)"),
              new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
     pdf.ln(3)
 
@@ -251,7 +251,7 @@ def generate_excel(
 
     # Formula note
     ws.merge_cells("A3:J3")
-    ws["A3"] = "σ = (TEa − |Bias%|) / CV%     |     QGI = |Bias%| / (1.5 × CV%)"
+    ws["A3"] = "σ = (TEa − |Bias%|) / CV%     |     QGI = (Bias% / 1.65) / (CV% / TEa% × 0.5)"
     ws["A3"].font      = _font(color="999999", size=8)
     ws["A3"].fill      = _fill("FFFFFF")
     ws["A3"].alignment = _align()
@@ -321,7 +321,7 @@ def generate_excel(
     ws2.row_dimensions[1].height = 20
 
     ws2.merge_cells("A2:C2")
-    ws2["A2"] = "QGI = |Bias%| / (1.5 × CV%)  — identifies whether bias or imprecision is the primary error source"
+    ws2["A2"] = "QGI = (Bias% / 1.65) / (CV% / TEa% × 0.5)  — identifies whether bias or imprecision is the primary error source"
     ws2["A2"].font      = _font(color="555555", size=9)
     ws2["A2"].fill      = _fill("F5F6FA")
     ws2["A2"].alignment = _align()
