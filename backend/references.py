@@ -128,6 +128,44 @@ REFERENCES: dict[str, dict] = {
             {"label": "OPSpecs Charts", "url": "https://www.westgard.com/opspecs-charts.htm"},
         ],
     },
+    "Westgard - Hematology": {
+        "full_name": "Westgard Hematology Quality Goals",
+        "organization": "Westgard QC, Inc., USA",
+        "description": (
+            "Westgard-compiled analytical quality goals for hematology analytes based on CLIA and BV standards. "
+            "Contains TEa specifications for CBC parameters including WBC, RBC, Hemoglobin, Hematocrit, Platelets, and indices."
+        ),
+        "url": "https://westgard.com/clia-and-quality-regulation-requirements/quality-requirements/hematology-goals.html",
+        "document": "Hematology Quality Goals and Performance Specifications",
+        "year": "Updated regularly",
+        "category": "QC Resources / Education",
+    },
+    "Westgard - Clinical Chemistry": {
+        "full_name": "Westgard Clinical Chemistry Performance Specifications",
+        "organization": "Westgard QC, Inc., USA",
+        "description": (
+            "Westgard-compiled consolidated comparison of clinical chemistry analytical quality goals "
+            "from CLIA, NCEP, BV, and other standards. "
+            "Covers glucose, electrolytes, proteins, lipids, enzymes, renal function, and specialty analytes."
+        ),
+        "url": "https://westgard.com/clia-and-quality-regulation-requirements/quality-requirements/consolidated-comparison-of-chemistry-performance-specifications.html",
+        "document": "Consolidated Comparison of Chemistry Performance Specifications",
+        "year": "Updated regularly",
+        "category": "QC Resources / Education",
+    },
+    "Westgard - Clinical Immunology": {
+        "full_name": "Westgard Clinical Immunology Performance Specifications",
+        "organization": "Westgard QC, Inc., USA",
+        "description": (
+            "Westgard-compiled consolidated comparison of immunoassay analytical quality goals "
+            "from CLIA, BV, and other standards. "
+            "Covers hormones, tumor markers, infectious disease serology, therapeutic drugs, and specialty immunoassays."
+        ),
+        "url": "https://westgard.com/clia-and-quality-regulation-requirements/quality-requirements/consolidated-comparison-of-immunoassay-performance-specifications.html",
+        "document": "Consolidated Comparison of Immunoassay Performance Specifications",
+        "year": "Updated regularly",
+        "category": "QC Resources / Education",
+    },
 }
 
 CATEGORY_ORDER = [
