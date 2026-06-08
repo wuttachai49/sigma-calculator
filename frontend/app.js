@@ -194,7 +194,7 @@ function displayResult(d) {
   document.getElementById('qgi-interp-title').textContent = worldClass
     ? `▸ ${d.analyte} — World Class (σ ≥ 6)`
     : `▸ ${d.analyte} — ${d.qgi_label}`;
-  document.getElementById('qgi-interp-title').style.color = qgiDispColor;
+  document.getElementById('qgi-interp-title').style.color = worldClass ? GREEN : qgiDispColor;
   document.getElementById('res-qgi-action').textContent   = worldClass
     ? `Sigma ≥ 6: World-class performance. QGI is informational only — error contributions are well within tolerance. Minimal QC burden required.`
     : d.qgi_action;
