@@ -230,9 +230,9 @@ function displayResult(d) {
     </tr>
     <tr>
       <td>QGI</td>
-      <td style="color:${d.qgi_color};font-weight:700">${d.qgi}</td>
+      <td style="color:${d.sigma>=6?'#ffffff':d.qgi_color};font-weight:700">${d.qgi}</td>
       <td>—</td>
-      <td style="color:${d.qgi_color};font-weight:600">${d.qgi_label}</td>
+      <td style="color:${d.sigma>=6?'#ffffff':d.qgi_color};font-weight:600">${d.sigma>=6?'✓ World Class — QC minimal':''+d.qgi_label}</td>
     </tr>
   `;
 
