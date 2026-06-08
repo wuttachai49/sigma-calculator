@@ -137,17 +137,28 @@ function displayResult(d) {
   resultContent.classList.remove('hidden');
 
   // ── Trio: Sigma / QGI / Grade ──────────────────────────────────────────
+  const worldClass = d.sigma >= 6;
+  const GREEN = '#10b981';
+
   const sigmaEl = document.getElementById('res-sigma');
   sigmaEl.textContent = d.sigma;
-  sigmaEl.style.color = d.grade_color;
+  sigmaEl.style.color = worldClass ? GREEN : d.grade_color;
 
   const qgiValEl = document.getElementById('res-qgi-value');
   qgiValEl.textContent = d.qgi;
-  qgiValEl.style.color = d.qgi_color;
+  qgiValEl.style.color = worldClass ? GREEN : d.qgi_color;
 
   const gradeEl = document.getElementById('res-grade');
   gradeEl.textContent = d.grade;
-  gradeEl.style.color = d.grade_color;
+  gradeEl.style.color = worldClass ? GREEN : d.grade_color;
+
+  // Trio container background — green tint when world-class
+  const trioBg = document.querySelector('.trio-display');
+  if (trioBg) {
+    trioBg.style.background    = worldClass ? 'rgba(16,185,129,0.08)' : 'var(--bg)';
+    trioBg.style.borderColor   = worldClass ? 'rgba(16,185,129,0.4)'  : 'var(--border)';
+    trioBg.style.boxShadow     = worldClass ? '0 0 18px rgba(16,185,129,0.12)' : 'none';
+  }
 
   // ── Summary table ─────────────────────────────────────────────────────
   document.getElementById('res-analyte').textContent = d.analyte;
@@ -165,7 +176,6 @@ function displayResult(d) {
   document.getElementById('detail-results').classList.remove('hidden');
 
   // ── QGI Gauge ─────────────────────────────────────────────────────────
-  const worldClass  = d.sigma >= 6;
   const qgiDispColor = worldClass ? '#ffffff' : d.qgi_color;
 
   const MAX_QGI = Math.max(d.qgi * 1.25, 2.0);
