@@ -9,7 +9,7 @@ A full-stack web application for calculating and reporting **Six Sigma metrics**
 | Feature | Description |
 |---|---|
 | **Sigma Calculator** | Compute σ = (TEa − \|Bias%\|) / CV% per analyte with grade classification |
-| **QGI Analysis** | Quality Goal Index = \|Bias%\| / (1.5 × CV%) — identifies whether to fix bias or imprecision |
+| **QGI Analysis** | Quality Goal Index = (Bias% / 1.65) / (CV% / TEa% × 0.5) — identifies whether to fix bias or imprecision |
 | **QC Rule Recommender** | Westgard multirule suggestions based on Sigma band (1:3s, 2:2s, R:4s, 4:1s, etc.) |
 | **OPSpecs Chart** | Interactive normalized Operating Specifications chart (Plotly) |
 | **Batch Import** | Upload CSV or Excel (including native IQC format with `IQC_data` sheet) |
@@ -25,7 +25,7 @@ A full-stack web application for calculating and reporting **Six Sigma metrics**
 ```
 Sigma (σ) = (TEa% − |Bias%|) / CV%
 
-QGI = |Bias%| / (1.5 × CV%)
+QGI = (Bias% / 1.65) / (CV% / TEa% × 0.5)
 ```
 
 ### Sigma Performance Bands
@@ -39,6 +39,10 @@ QGI = |Bias%| / (1.5 × CV%)
 | < 3 | Unacceptable | Method improvement required |
 
 ### QGI Interpretation
+
+Numerator: `Bias% / 1.65` — inaccuracy relative to the 1.65 z-score factor  
+Denominator: `(CV% / TEa%) × 0.5` — imprecision relative to allowable imprecision (0.5 × TEa)  
+Simplified: `QGI = (Bias% × TEa%) / (0.825 × CV%)`
 
 | QGI | Label | Action |
 |---|---|---|
