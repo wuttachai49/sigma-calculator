@@ -165,22 +165,29 @@ function displayResult(d) {
   document.getElementById('detail-results').classList.remove('hidden');
 
   // ── QGI Gauge ─────────────────────────────────────────────────────────
-  const MAX_QGI = Math.max(d.qgi * 1.25, 2.0);  // dynamic scale — always shows needle with headroom
+  const worldClass  = d.sigma >= 6;
+  const qgiDispColor = worldClass ? '#ffffff' : d.qgi_color;
+
+  const MAX_QGI = Math.max(d.qgi * 1.25, 2.0);
   const pct = Math.min(d.qgi / MAX_QGI, 1) * 100;
   document.getElementById('qgi-fill').style.width      = pct + '%';
-  document.getElementById('qgi-fill').style.background = d.qgi_color;
+  document.getElementById('qgi-fill').style.background = worldClass ? 'rgba(255,255,255,0.35)' : d.qgi_color;
   document.getElementById('qgi-needle').style.left     = pct + '%';
   document.getElementById('qgi-current-chip').textContent = `▶ QGI = ${d.qgi}`;
-  document.getElementById('qgi-current-chip').style.color       = d.qgi_color;
-  document.getElementById('qgi-current-chip').style.borderColor = d.qgi_color + '88';
-  document.getElementById('qgi-current-chip').style.background  = d.qgi_color + '22';
+  document.getElementById('qgi-current-chip').style.color       = qgiDispColor;
+  document.getElementById('qgi-current-chip').style.borderColor = qgiDispColor + '88';
+  document.getElementById('qgi-current-chip').style.background  = worldClass ? 'rgba(255,255,255,0.08)' : d.qgi_color + '22';
 
   // ── QGI Interpretation card ───────────────────────────────────────────
   const interpCard = document.getElementById('qgi-interp-card');
-  interpCard.className = 'card qgi-interp-card ' + _qgiZoneClass(d.qgi_label);
-  document.getElementById('qgi-interp-title').textContent = `▸ ${d.analyte} — ${d.qgi_label}`;
-  document.getElementById('qgi-interp-title').style.color = d.qgi_color;
-  document.getElementById('res-qgi-action').textContent   = d.qgi_action;
+  interpCard.className = 'card qgi-interp-card ' + (worldClass ? 'zone-world' : _qgiZoneClass(d.qgi_label));
+  document.getElementById('qgi-interp-title').textContent = worldClass
+    ? `▸ ${d.analyte} — World Class (σ ≥ 6)`
+    : `▸ ${d.analyte} — ${d.qgi_label}`;
+  document.getElementById('qgi-interp-title').style.color = qgiDispColor;
+  document.getElementById('res-qgi-action').textContent   = worldClass
+    ? `Sigma ≥ 6: World-class performance. QGI is informational only — error contributions are well within tolerance. Minimal QC burden required.`
+    : d.qgi_action;
 
   // ── Error Breakdown table ─────────────────────────────────────────────
   const tea  = d.tea;

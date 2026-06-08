@@ -533,6 +533,7 @@ p.muted { font-size: .875rem; line-height: 1.55; margin-bottom: 1.25rem; }
 .qgi-interp-card {
   transition: background .4s, border-color .4s;
 }
+.qgi-interp-card.zone-world     { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.25); }
 .qgi-interp-card.zone-precision { background: rgba(99,102,241,.08);  border-color: rgba(99,102,241,.35); }
 .qgi-interp-card.zone-balanced  { background: rgba(16,185,129,.08);  border-color: rgba(16,185,129,.35); }
 .qgi-interp-card.zone-moderate  { background: rgba(245,158,11,.08);  border-color: rgba(245,158,11,.35); }
