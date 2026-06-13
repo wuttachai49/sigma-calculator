@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PT / APTT Reaction Curve Reader &mdash; Mindray CX-6000 / CX-6010</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#fff;color:#1C1C2E;line-height:1.5}
+.container{max-width:880px;margin:0 auto;padding:28px 24px 48px}
+.header{padding-bottom:12px;border-bottom:2.5px solid #1B5FA3;margin-bottom:0}
+.header-title{font-size:21px;font-weight:700;color:#1B5FA3;letter-spacing:-.3px}
+.header-sub{font-size:12px;color:#6B7080;margin-top:3px}
+/* Tabs */
+.tab-bar{display:flex;border-bottom:1.5px solid #DDE1EE;margin-bottom:22px}
+.tab-btn{padding:9px 22px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:#888;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;font-family:inherit;transition:color .12s}
+.tab-btn.active{color:#1B5FA3;border-bottom-color:#1B5FA3}
+.tab-btn:hover:not(.active){color:#333}
+/* Scenario bar */
+.sc-group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:22px;padding:11px 13px;background:#F5F7FB;border-radius:10px;border:1.5px solid #E0E4F0}
+.sc-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.6px}
+.sc-sep{width:1px;height:20px;background:#D0D4E4;margin:0 5px}
+.scbtn{padding:5px 12px;border:1.5px solid #D0D4E4;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;font-weight:500;color:#555;transition:all .12s;font-family:inherit}
+.scbtn:hover:not(.act){background:#EEF2FF;border-color:#B0BADD;color:#333}
+.ptbtn.act{background:#1B5FA3;color:#fff;border-color:#1B5FA3}
+.apbtn.act{background:#0D7A5C;color:#fff;border-color:#0D7A5C}
+/* Charts */
+.chart-section{margin-bottom:2px}
+.chart-label-row{display:flex;align-items:center;gap:8px;padding:7px 0 4px}
+.chart-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.chart-name{font-size:13px;font-weight:700}
+.chart-desc{font-size:11px;color:#888;margin-left:2px}
+.chart-row{display:flex;align-items:stretch}
+.y-axis{width:38px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;padding:8px 6px 14px 0}
+.y-axis span{font-size:10px;color:#999;line-height:1}
+canvas{display:block;flex:1;min-width:0}
+.tax-wrap{margin-left:38px;position:relative;height:22px;margin-bottom:2px}
+.tl{position:absolute;font-size:10px;color:#999;transform:translateX(-50%)}
+.tu{position:absolute;right:0;font-size:10px;color:#bbb;font-style:italic}
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;padding:9px 13px;background:#FAFBFD;border-radius:8px;border:1px solid #E8EAF2}
+.lg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
+.lg-line{width:18px;height:3px;border-radius:2px}
+.lg-dash{width:18px;border-top:2px dashed}
+.lg-band{width:13px;height:10px;border-radius:2px;background:rgba(13,122,92,.12);border:1px solid rgba(13,122,92,.35)}
+/* Result */
+.result{margin-top:15px;background:#F5F7FB;border:1.5px solid #DDE1EE;border-radius:10px;padding:15px 17px}
+.result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:13px}
+.m-label{font-size:11px;color:#888;margin-bottom:2px}
+.m-val-lg{font-size:23px;font-weight:700;line-height:1.1}
+.m-val{font-size:15px;font-weight:600}
+.result-hr{border:none;border-top:1.5px solid #E0E4EE;margin-bottom:11px}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:4px;margin-bottom:7px}
+.b-n{background:#E6F7F0;color:#0A6E50}.b-w{background:#FFF3E0;color:#B06000}
+.b-e{background:#FEE8E8;color:#B02020}.b-a{background:#FEE8E8;color:#B02020}
+.r-interp{font-size:13px;font-weight:600;color:#1C1C2E;margin-bottom:5px}
+.r-action{font-size:12px;color:#4A4A6A;line-height:1.6}
+/* Ref table */
+.ref-table{margin-top:20px;border:1.5px solid #DDE1EE;border-radius:10px;overflow:hidden}
+.ref-table-hdr{background:#1B5FA3;color:#fff;font-size:13px;font-weight:700;padding:9px 15px}
+.ref-table table{width:100%;border-collapse:collapse;font-size:12px}
+.ref-table th{background:#EEF2FF;color:#333;font-weight:700;padding:7px 11px;text-align:left;border-bottom:1.5px solid #DDE1EE}
+.ref-table td{padding:7px 11px;border-bottom:1px solid #F0F2FA;color:#333;vertical-align:top;line-height:1.45}
+.ref-table tr:last-child td{border-bottom:none}
+.ref-table tr:nth-child(even) td{background:#FAFBFD}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:3px}
+.tn{background:#E6F7F0;color:#0A6E50}.ta{background:#FEE8E8;color:#B02020}
+.tw{background:#FFF3E0;color:#B06000}.te{background:#FEE8E8;color:#B02020}
+/* Note box */
+.note-box{margin-top:18px;padding:12px 15px;background:#EEF6FF;border-left:3.5px solid #1B5FA3;border-radius:0 8px 8px 0}
+.note-box strong{font-size:12px;color:#1B5FA3;display:block;margin-bottom:4px}
+.note-box p{font-size:12px;color:#2A3A5A;line-height:1.6}
+/* Footer */
+.footer{margin-top:26px;padding-top:11px;border-top:1px solid #E8EAF2;font-size:11px;color:#AAA;text-align:center}
+
+/* ── INDEX TAB ── */
+.idx-section{margin-bottom:30px}
+.idx-sec-hdr{margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #E8EAF2}
+.idx-sec-num{font-size:10px;font-weight:700;color:#1B5FA3;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.idx-sec-title{font-size:17px;font-weight:700;color:#1C1C2E;margin-bottom:5px}
+.idx-sec-desc{font-size:12.5px;color:#555;line-height:1.6}
+.idx-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.idx-2col{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.idx-card{border:1.5px solid #DDE1EE;border-radius:9px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.idx-card-accent{height:4px;flex-shrink:0}
+.idx-card-body{padding:12px 13px;flex:1}
+.idx-card-title{font-size:13px;font-weight:700;color:#1C1C2E;margin-bottom:2px}
+.idx-card-formula{font-size:11.5px;color:#555;background:#F0F4FF;border-radius:4px;padding:3px 8px;display:inline-block;margin:4px 0 5px;font-style:italic}
+.idx-def{font-size:12px;color:#333;line-height:1.65}
+.idx-note{font-size:11px;color:#3A3A5A;background:#F5F7FB;border-radius:6px;padding:7px 10px;margin-top:8px;line-height:1.6;border-left:3px solid #D0D4E4}
+.idx-note b{color:#1C1C2E;font-weight:600}
+.idx-note .ok{color:#0A6E50}.idx-note .warn{color:#B06000}.idx-note .bad{color:#B02020}
+.idx-sign-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.idx-sign{font-size:11px;padding:2px 9px;border-radius:4px;font-weight:600}
+.idx-sign-n{background:#E6F7F0;color:#0A6E50}
+.idx-sign-w{background:#FFF3E0;color:#B06000}
+.idx-sign-e{background:#FEE8E8;color:#B02020}
+@media(max-width:620px){.idx-3col,.idx-2col{grid-template-columns:1fr}}
+@media print{.tab-bar{display:none}#panel-reader,#panel-index{display:block!important}.idx-card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <div class="header-title">PT / APPT Reaction Curve Reader</div>
+  <div class="header-sub">Optical clot detection &nbsp;&middot;&nbsp; Mindray CX-6000 Series &nbsp;&middot;&nbsp; Fixed-frequency constant-speed platform</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="reader">&#9654;&nbsp; Curve Reader</button>
+  <button class="tab-btn" data-tab="index">&#9776;&nbsp; Index</button>
+</div>
+
+<div id="panel-reader" class="tab-panel">
+<div class="sc-group">
+  <span class="sc-label">PT</span>
+  <button class="scbtn ptbtn act" data-sc="normalPT">Normal</button>
+  <button class="scbtn ptbtn" data-sc="prolongedPT">Prolonged</button>
+  <button class="scbtn ptbtn" data-sc="lowFib">Low fibrinogen</button>
+  <button class="scbtn ptbtn" data-sc="preClotted">Pre-clotted</button>
+  <div class="sc-sep"></div>
+  <span class="sc-label">APPT</span>
+  <button class="scbtn apbtn" data-sc="normalAPTT">Normal</button>
+  <button class="scbtn apbtn" data-sc="prolongedAPTT">Prolonged</button>
+  <button class="scbtn apbtn" data-sc="inhibitorLA">Inhibitor / LA</button>
+</div>
+
+<div class="chart-section">
+  <div class="chart-label-row">
+    <div class="chart-dot" style="background:#2176AE"></div>
+    <span class="chart-name" style="color:#2176AE">Luminous Flux &nbsp;&#8212; Original reaction curve</span>
+    <span class="chart-desc">— raw light intensity through sample; decreases as fibrin clot forms (Y-axis per IFU: Luminous Flux)</span>
+  </div>
+  <div class="chart-row">
+    <div class="y-axis"><span>High</span><span style="font-size:9px">Flux</span><span>Low</span></div>
+    <canvas id="ct" style="height:130px"></canvas>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-label-row">
+    <div class="chart-dot" style="background:#C47D17"></div>
+    <span class="chart-name" style="color:#C47D17">1. Deriv. &nbsp;&#8212; First derivative</span>
+    <span class="chart-desc">— rate of change of flux &nbsp;&middot;&nbsp; peak (most negative) = Clot Point</span>
+  </div>
+  <div class="chart-row">
+    <div class="y-axis"><span>+</span><span>0</span><span>&minus;</span></div>
+    <canvas id="cd1" style="height:90px"></canvas>
+  </div>
+</div>
+
+<div class="chart-section">
+  <div class="chart-label-row">
+    <div class="chart-dot" style="background:#0D9E6E"></div>
+    <span class="chart-name" style="color:#0D9E6E">2. Deriv. &nbsp;&#8212; Second derivative</span>
+    <span class="chart-desc">— acceleration of clot formation &nbsp;&middot;&nbsp; zero crossing confirms Clot Point</span>
+  </div>
+  <div class="chart-row">
+    <div class="y-axis"><span>+</span><span>0</span><span>&minus;</span></div>
+    <canvas id="cd2" style="height:90px"></canvas>
+  </div>
+</div>
+
+<div class="tax-wrap" id="tax"></div>
+
+<div class="legend">
+  <div class="lg-item"><div class="lg-line" style="background:#2176AE"></div>Original reaction curve (Luminous Flux)</div>
+  <div class="lg-item"><div class="lg-line" style="background:#C47D17"></div>1. Deriv. &mdash; First derivative</div>
+  <div class="lg-item"><div class="lg-line" style="background:#0D9E6E"></div>2. Deriv. &mdash; Second derivative</div>
+  <div class="lg-item"><div class="lg-dash" style="border-color:#D63031"></div>Clot time</div>
+  <div class="lg-item"><div class="lg-band"></div>Reference interval</div>
+</div>
+
+<div class="result">
+  <div class="result-grid">
+    <div><div class="m-label">Clot time</div><div id="rct" class="m-val-lg">&mdash;</div></div>
+    <div><div class="m-label">Reference range</div><div id="rref" class="m-val">&mdash;</div></div>
+    <div><div class="m-label">Amplitude</div><div id="ramp" class="m-val">&mdash;</div></div>
+    <div><div id="rrl" class="m-label">INR</div><div id="rrv" class="m-val">&mdash;</div></div>
+  </div>
+  <hr class="result-hr">
+  <span id="rbadge" class="badge"></span>
+  <div id="rip" class="r-interp"></div>
+  <div id="rac" class="r-action"></div>
+</div>
+
+<div class="ref-table">
+  <div class="ref-table-hdr">Curve Pattern Quick Reference</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%">Reaction curve pattern</th>
+        <th style="width:22%">First derivative</th>
+        <th style="width:22%">Second derivative</th>
+        <th style="width:28%">Interpretation</th>
+        <th style="width:10%">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Clean sigmoid, full amplitude</td><td>Sharp negative peak at expected time</td><td>Clean zero crossing at clot time</td><td>Normal &mdash; report result</td><td><span class="tag tn">Normal</span></td></tr>
+      <tr><td>Sigmoid shifted right, normal amplitude</td><td>Peak delayed, same depth</td><td>Zero crossing delayed</td><td>Factor deficiency or anticoagulant &mdash; check INR, Factor VII, warfarin</td><td><span class="tag ta">Abnormal</span></td></tr>
+      <tr><td>Shallow drop, amplitude &lt;40%</td><td>Flat, low-magnitude peak</td><td>Weak, barely detectable</td><td>Low fibrinogen / dysfibrinogenemia &mdash; run Clauss fibrinogen</td><td><span class="tag tw">Check</span></td></tr>
+      <tr><td>Flat high line, T unchanged</td><td>Flat near zero throughout</td><td>Flat near zero throughout</td><td>Pre-clotted or factors consumed &mdash; reject and recollect</td><td><span class="tag te">Reject</span></td></tr>
+      <tr><td>Delayed drop, normal shape</td><td>Delayed peak, normal depth</td><td>Normal shape, zero crossing shifted right</td><td>Heparin or inhibitor (LA) &mdash; perform mixing study</td><td><span class="tag ta">Abnormal</span></td></tr>
+      <tr><td>Noisy / irregular baseline</td><td>Multiple small or irregular peaks</td><td>Chaotic / unclear</td><td>Lipemia, bubbles, partial pre-clot &mdash; check HIL flag</td><td><span class="tag te">Reject</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="note-box">
+  <strong>Mixing Study &mdash; Inhibitor vs. Deficiency</strong>
+  <p>Mix patient plasma 1:1 with normal pooled plasma. Repeat immediately and after 2&nbsp;h incubation at 37&deg;C.<br>
+  <strong>Correction</strong> &rarr; Factor deficiency (VIII, IX, XI, XII). Proceed to specific factor assay.<br>
+  <strong>No correction</strong> &rarr; Inhibitor. Confirm lupus anticoagulant with dRVVT or hexagonal-phase phospholipid test.</p>
+</div>
+
+<div class="footer">PT / APPT Reaction Curve Reader &middot; Mindray CX-6000 Series &middot; Optical detection &middot; Simulated curves for training only</div>
+</div>
+
+</div>
+
+</div>
+<script>
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).style.display = 'block';
+  });
+});
+
+// Scenarios
+const SC = {
+  normalPT:     {ts:'PT',  mt:60,  h:95,l:12,t0:12,k:.45,ns:1.5,rMn:10,rMx:14,ct:12.1,INR:1.0, rt:null,st:'normal',  ip:'Normal PT — extrinsic and common pathways intact',                                   ac:'No action required. Report result with reference interval.'},
+  prolongedPT:  {ts:'PT',  mt:60,  h:95,l:12,t0:26,k:.38,ns:1.5,rMn:10,rMx:14,ct:26.3,INR:2.3, rt:null,st:'abnormal', ip:'Prolonged PT (26.3 s, INR 2.3) — extrinsic / common pathway defect',                  ac:'Check: warfarin use · Factor VII level · Vitamin K status. If APPT also prolonged → common pathway (Factors X, V, II, fibrinogen).'},
+  lowFib:       {ts:'PT',  mt:60,  h:87,l:62,t0:14,k:.28,ns:.6, rMn:10,rMx:14,ct:14.2,INR:1.3, rt:null,st:'warning',  ip:'Low amplitude — fibrinogen deficiency or dysfibrinogenemia',                          ac:'Run Clauss fibrinogen urgently. Amplitude <40% → clot quality poor and result unreliable. Check DIC screen, liver function.'},
+  preClotted:   {ts:'PT',  mt:60,  sp:'pc',               rMn:10,rMx:14,ct:null,INR:null,rt:null,st:'error',   ip:'No reaction — sample pre-clotted or coagulation factors consumed',                          ac:'REJECT result. Recollect in fresh 3.2% sodium citrate tube. Verify fill volume (1:9 blood:citrate ratio).'},
+  normalAPTT:   {ts:'APPT',mt:120, h:92,l:10,t0:30,k:.32,ns:1.5,rMn:25,rMx:35,ct:30.2,INR:null,rt:1.00,st:'normal',  ip:'Normal APPT — intrinsic and common pathways intact',                                   ac:'No action required. Report result with reference interval.'},
+  prolongedAPTT:{ts:'APPT',mt:120, h:92,l:10,t0:80,k:.30,ns:1.5,rMn:25,rMx:35,ct:80.4,INR:null,rt:2.68,st:'abnormal', ip:'Markedly prolonged APPT (ratio 2.68) — likely heparin effect or strong inhibitor',    ac:'On UFH: verify dose (target ratio 1.5–2.5). Not heparinized: check Factors VIII, IX, XI, XII. Perform mixing study.'},
+  inhibitorLA:  {ts:'APPT',mt:120, h:92,l:10,t0:63,k:.30,ns:1.5,rMn:25,rMx:35,ct:63.1,INR:null,rt:2.10,st:'abnormal', ip:'Prolonged APPT, normal curve shape — inhibitor likely (lupus anticoagulant or factor inhibitor)', ac:'Mixing study (1:1 patient + normal plasma). No correction → confirm LA with dRVVT. Correction → factor deficiency (VIII, IX, XI).'},
+};
+const sig=(t,t0,k)=>1/(1+Math.exp(-k*(t-t0)));
+const smt=(a,w)=>a.map((_,i)=>{let s=0,c=0;for(let j=Math.max(0,i-w);j<=Math.min(a.length-1,i+w);j++){s+=a[j];c++;}return s/c;});
+const dff=(a,dt)=>a.map((_,i)=>i===0?(a[1]-a[0])/dt:i===a.length-1?(a[i]-a[i-1])/dt:(a[i+1]-a[i-1])/(2*dt));
+function calc(sc){
+  const N=500,dt=sc.mt/N;
+  const ts=Array.from({length:N+1},(_,i)=>i*dt);
+  let T;
+  if(sc.sp==='pc'){let s=9999;const nr=()=>{s=(s*1664525+1013904223)>>>0;return(s/0xffffffff-.5)*.8;};T=ts.map(()=>90+nr());}
+  else{let s=54321;const nr=()=>{s=(s*1664525+1013904223)>>>0;return(s/0xffffffff-.5)*2*(sc.ns||0);};T=ts.map(t=>sc.h-(sc.h-sc.l)*sig(t,sc.t0,sc.k)+nr());}
+  const Ts=smt(T,4),D1=smt(dff(Ts,dt),6),D2=smt(dff(D1,dt),6);
+  let ci=0;D1.forEach((v,i)=>{if(v<D1[ci])ci=i;});
+  return{ts,T:Ts,D1,D2,ci};
+}
+const DPR=Math.min(devicePixelRatio||1,2);
+const PL=6,PR=18,PT=8,PB=14;
+function setupC(id){const el=document.getElementById(id);const r=el.getBoundingClientRect();el.width=r.width*DPR;el.height=r.height*DPR;const ctx=el.getContext('2d');ctx.scale(DPR,DPR);return{ctx,w:r.width,h:r.height};}
+const xOf=(t,mt,w)=>PL+(t/mt)*(w-PL-PR);
+const yOf=(v,mn,mx,h)=>PT+(h-PT-PB)*(1-(v-mn)/(mx-mn));
+function drawChart(id,data,sc,crv,col,mn,mx,opts){
+  const{ctx,w,h}=setupC(id);
+  const cw=w-PL-PR,ch=h-PT-PB;
+  const xO=t=>xOf(t,sc.mt,w),yO=v=>yOf(v,mn,mx,h);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#F7F9FC';ctx.fillRect(PL,PT,cw,ch);
+  if(opts.ref&&sc.rMn){
+    const x1=xO(sc.rMn),x2=xO(sc.rMx);
+    ctx.fillStyle='rgba(13,122,92,.1)';ctx.fillRect(x1,PT,x2-x1,ch);
+    ctx.strokeStyle='rgba(13,122,92,.4)';ctx.lineWidth=1;ctx.setLineDash([]);
+    [x1,x2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,PT+ch);ctx.stroke();});
+    ctx.font='9px system-ui,sans-serif';ctx.fillStyle='rgba(13,122,92,.6)';ctx.textAlign='center';ctx.textBaseline='bottom';
+    ctx.fillText('ref interval',(x1+x2)/2,PT+ch-2);
+  }
+  ctx.strokeStyle='rgba(0,0,0,.055)';ctx.lineWidth=.5;ctx.setLineDash([]);
+  [0,.25,.5,.75,1].forEach(f=>{const y=PT+f*ch;ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(PL+cw,y);ctx.stroke();});
+  const step=sc.mt<=60?10:20;
+  for(let t=0;t<=sc.mt;t+=step){const x=xO(t);ctx.beginPath();ctx.moveTo(x,PT);ctx.lineTo(x,PT+ch);ctx.stroke();}
+  if(opts.zero){const y0=yO(0);ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=1;ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(PL,y0);ctx.lineTo(PL+cw,y0);ctx.stroke();
+    ctx.font='9px system-ui,sans-serif';ctx.fillStyle='#bbb';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('zero',PL+cw+2,y0);}
+  ctx.strokeStyle='#C0C6D8';ctx.lineWidth=1;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+ch);ctx.lineTo(PL+cw,PT+ch);ctx.stroke();
+  if(!sc.sp&&sc.ct){
+    const xc=xO(sc.ct);ctx.strokeStyle='#D63031';ctx.lineWidth=1.8;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(xc,PT);ctx.lineTo(xc,PT+ch);ctx.stroke();ctx.setLineDash([]);
+    if(opts.ref){const rs=sc.ct<sc.mt*.65;ctx.font='bold 9.5px system-ui,sans-serif';ctx.fillStyle='#D63031';ctx.textAlign=rs?'left':'right';ctx.textBaseline='top';ctx.fillText(sc.ct.toFixed(1)+' s',xc+(rs?3:-3),PT+2);}
+  }
+  const cc=(sc.sp==='pc'&&opts.ref)?'#D46060':col;
+  ctx.strokeStyle=cc;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash([]);
+  ctx.beginPath();data.ts.forEach((t,i)=>{const x=xO(t),y=yO(Math.max(mn,Math.min(mx,crv[i])));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
+  if(opts.dot&&!sc.sp&&data.ci!==undefined){
+    const t=data.ts[data.ci],v=Math.max(mn,Math.min(mx,crv[data.ci]));const px=xO(t),py=yO(v);
+    ctx.beginPath();ctx.arc(px,py,8,0,Math.PI*2);ctx.fillStyle=col+'28';ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,4.5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,4.5,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    const rs=sc.ct<sc.mt*.6;ctx.font='9px system-ui,sans-serif';ctx.fillStyle='#888';ctx.textAlign=rs?'left':'right';ctx.textBaseline='middle';ctx.fillText('peak',px+(rs?10:-10),py);
+  }
+  if(opts.ref&&!sc.sp){
+    const tB=data.T.slice(0,20).reduce((a,b)=>a+b)/20,tP=data.T.slice(-20).reduce((a,b)=>a+b)/20;
+    const y1=yO(tB),y2=yO(tP);
+    if(y2-y1>18){const bx=PL+cw+2;ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=.8;ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(bx-5,y1);ctx.lineTo(bx,y1);ctx.lineTo(bx,y2);ctx.lineTo(bx-5,y2);ctx.stroke();}
+  }
+}
+function render(key){
+  const sc=SC[key],d=calc(sc);
+  drawChart('ct', d,sc,d.T, '#2176AE',0,100,{ref:true});
+  const d1m=Math.max(...d.D1.map(Math.abs),.01)*1.3;drawChart('cd1',d,sc,d.D1,'#C47D17',-d1m,d1m,{zero:true,dot:true});
+  const d2m=Math.max(...d.D2.map(Math.abs),.001)*1.3;drawChart('cd2',d,sc,d.D2,'#0D9E6E',-d2m,d2m,{zero:true});
+  const ta=document.getElementById('tax'),tw=ta.getBoundingClientRect().width;ta.innerHTML='';
+  const step=sc.mt<=60?10:20;
+  for(let t=0;t<=sc.mt;t+=step){const lft=PL+(t/sc.mt)*(tw-PL-PR);const sp=document.createElement('span');sp.className='tl';sp.style.left=lft.toFixed(1)+'px';sp.textContent=t;ta.appendChild(sp);}
+  const su=document.createElement('span');su.className='tu';su.textContent='seconds';ta.appendChild(su);
+  const rct=document.getElementById('rct');
+  if(!sc.ct){rct.textContent='N/A';rct.style.color='#C0392B';}
+  else{rct.textContent=sc.ct.toFixed(1)+' s';rct.style.color=sc.st==='normal'?'#0D7A5C':sc.st==='warning'?'#B06000':'#C0392B';}
+  document.getElementById('rref').textContent=sc.rMn+' – '+sc.rMx+' s';
+  const amp=sc.sp?0:Math.round(Math.abs(d.T.slice(0,20).reduce((a,b)=>a+b)/20-d.T.slice(-20).reduce((a,b)=>a+b)/20));
+  const ra=document.getElementById('ramp');ra.textContent=amp+'%';ra.style.color=(amp<40&&!sc.sp)?'#B06000':'#1C1C2E';
+  document.getElementById('rrl').textContent=sc.ts==='PT'?'INR':'APPT Ratio';
+  const rv=sc.ts==='PT'?sc.INR:sc.rt;document.getElementById('rrv').textContent=rv!=null?rv.toFixed(2):'—';
+  const bd=document.getElementById('rbadge');bd.className='badge';
+  if(sc.st==='normal'){bd.classList.add('b-n');bd.textContent='✓  Normal';}
+  else if(sc.st==='warning'){bd.classList.add('b-w');bd.textContent='⚠  Check quality';}
+  else if(sc.st==='error'){bd.classList.add('b-e');bd.textContent='✗  Reject';}
+  else{bd.classList.add('b-a');bd.textContent='!  Abnormal';}
+  document.getElementById('rip').textContent=sc.ip;
+  document.getElementById('rac').textContent=sc.ac;
+}
+document.querySelectorAll('.scbtn').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.scbtn').forEach(x=>x.classList.remove('act'));b.classList.add('act');render(b.dataset.sc);});});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const a=document.querySelector('.scbtn.act');if(a)render(a.dataset.sc);},150);});
+requestAnimationFrame(()=>render('normalPT'));
+</script>
+</body>
+</html>
